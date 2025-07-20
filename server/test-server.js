@@ -11,8 +11,8 @@ console.log('Port (using):', PORT);
 console.log('Node version:', process.version);
 console.log('Environment:', process.env.NODE_ENV);
 
-// Import database setup
-const { setupDatabase } = require('./setup-database');
+// Import simple, crash-proof database setup
+const { setupDatabase } = require('./simple-database-setup');
 
 // Enable CORS for all routes
 app.use(cors({
@@ -33,26 +33,31 @@ app.use((req, res, next) => {
 let databaseSetupComplete = false;
 let setupError = null;
 
-// Automatic database setup on startup
+// Automatic database setup on startup (non-blocking)
 async function initializeDatabase() {
-  if (!process.env.DATABASE_URL) {
-    console.log('⚠️  DATABASE_URL not found - skipping database setup');
-    return;
-  }
-
-  console.log('🏗️  Starting automatic database setup...');
   try {
-    await setupDatabase();
-    databaseSetupComplete = true;
-    console.log('✅ Database setup completed successfully!');
+    console.log('🏗️  Starting automatic database setup...');
+    const result = await setupDatabase();
+    
+    if (result.success) {
+      databaseSetupComplete = true;
+      console.log('✅ Database setup completed successfully!');
+    } else {
+      setupError = result.message;
+      console.log('⚠️  Database setup skipped:', result.message);
+    }
   } catch (error) {
     setupError = error.message;
     console.error('❌ Database setup failed:', error.message);
+    // Don't crash the server - continue running
   }
 }
 
-// Initialize database on startup
-initializeDatabase();
+// Initialize database on startup (non-blocking - don't wait for it)
+initializeDatabase().catch(err => {
+  console.error('❌ Database initialization error (non-fatal):', err.message);
+  setupError = err.message;
+});
 
 // Root health check for Railway
 app.get('/', (req, res) => {
