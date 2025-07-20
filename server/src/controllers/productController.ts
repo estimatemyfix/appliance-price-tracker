@@ -131,17 +131,27 @@ export const searchProducts = async (req: Request, res: Response): Promise<void>
           brand: row.brand,
           image_url: row.image_url,
           description: row.description,
+          created_at: row.created_at || new Date(),
+          updated_at: row.updated_at || new Date(),
           category: row.category_name ? {
             id: row.category_id,
             name: row.category_name,
             slug: row.category_slug
           } : undefined,
-          current_price: row.current_price,
-          original_price: row.original_price,
-          retailer_name: row.retailer_name,
-          retailer_logo: row.retailer_logo,
-          is_available: row.is_available
-        })),
+          listings: [{
+            retailer: {
+              id: row.retailer_id,
+              name: row.retailer_name,
+              domain: row.retailer_domain || '',
+              logo_url: row.retailer_logo
+            },
+            current_price: {
+              price: row.current_price,
+              original_price: row.original_price,
+              is_available: row.is_available
+            }
+          }]
+        })) as any,
         total,
         page,
         limit
@@ -391,7 +401,8 @@ export const getRecommendations = async (req: Request, res: Response): Promise<v
 // GET /api/products/:id/price-history
 export const getPriceHistory = async (req: Request, res: Response): Promise<void> => {
   const productId = parseInt(req.params.id);
-  const { days = 30, retailer } = req.query;
+  const { retailer } = req.query;
+  const days = parseInt(req.query.days as string) || 30;
 
   if (isNaN(productId)) {
     throw new ApiError(400, 'Invalid product ID');

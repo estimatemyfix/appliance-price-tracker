@@ -34,7 +34,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email, is_premium: false },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET || 'default-secret-key-for-development',
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
