@@ -16,6 +16,9 @@ app.use(cors({
   credentials: true
 }));
 
+// Parse JSON bodies
+app.use(express.json());
+
 // Add request logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -65,6 +68,104 @@ app.get('/api/test', (req, res) => {
     console.error('Error in test handler:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// Product search endpoint (temporary mock data)
+app.get('/api/products/search', (req, res) => {
+  console.log('Product search called, query:', req.query.q);
+  try {
+    const query = req.query.q || '';
+    
+    // Mock data for now - replace with real database later
+    const mockProducts = [
+      {
+        id: 1,
+        name: `${query} Dishwasher`,
+        brand: 'Samsung',
+        model_number: 'DW80R9950US',
+        image_url: 'https://images.samsung.com/is/image/samsung/p6pim/us/dw80r9950us/gallery/us-dw80r9950us-dw80r9950us-aa-frontopendoor-thumb-409992276',
+        description: 'Energy efficient dishwasher with third rack',
+        listings: [
+          {
+            retailer: {
+              name: 'Best Buy',
+              domain: 'bestbuy.com',
+              logo_url: 'https://logos-world.net/wp-content/uploads/2020/05/Best-Buy-Logo.png'
+            },
+            current_price: {
+              price: 899.99,
+              original_price: 1199.99,
+              is_available: true
+            }
+          },
+          {
+            retailer: {
+              name: 'Home Depot',
+              domain: 'homedepot.com', 
+              logo_url: 'https://logos-world.net/wp-content/uploads/2020/04/Home-Depot-Logo.png'
+            },
+            current_price: {
+              price: 849.99,
+              original_price: 1199.99,
+              is_available: true
+            }
+          }
+        ]
+      },
+      {
+        id: 2,
+        name: `${query} Refrigerator`,
+        brand: 'LG',
+        model_number: 'LRFVC2406S',
+        image_url: 'https://gscs.lge.com/gscs/Images/LG_LRFVC2406S_01.jpg',
+        description: 'French door refrigerator with smart features',
+        listings: [
+          {
+            retailer: {
+              name: 'Lowes',
+              domain: 'lowes.com',
+              logo_url: 'https://logos-world.net/wp-content/uploads/2020/04/Lowes-Logo.png'
+            },
+            current_price: {
+              price: 1299.99,
+              original_price: 1499.99,
+              is_available: true
+            }
+          }
+        ]
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: {
+        products: mockProducts,
+        total: mockProducts.length,
+        page: 1,
+        limit: 10
+      }
+    });
+  } catch (error) {
+    console.error('Error in product search:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// Auth endpoints (temporary placeholders)
+app.post('/api/auth/login', (req, res) => {
+  console.log('Login called');
+  res.json({ success: false, message: 'Authentication not yet implemented' });
+});
+
+app.post('/api/auth/register', (req, res) => {
+  console.log('Register called');
+  res.json({ success: false, message: 'Registration not yet implemented' });
+});
+
+// Product details endpoint
+app.get('/api/products/:id', (req, res) => {
+  console.log('Product details called, ID:', req.params.id);
+  res.json({ success: false, message: 'Product details not yet implemented' });
 });
 
 // Add 404 handler
