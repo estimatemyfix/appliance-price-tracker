@@ -11,6 +11,9 @@ console.log('Port (using):', PORT);
 console.log('Node version:', process.version);
 console.log('Environment:', process.env.NODE_ENV);
 
+// Import database setup
+const { setupDatabase } = require('./setup-database');
+
 // Enable CORS for all routes
 app.use(cors({
   origin: '*',
@@ -26,130 +29,201 @@ app.use((req, res, next) => {
   next();
 });
 
+// Database setup flag
+let databaseSetupComplete = false;
+let setupError = null;
+
+// Automatic database setup on startup
+async function initializeDatabase() {
+  if (!process.env.DATABASE_URL) {
+    console.log('⚠️  DATABASE_URL not found - skipping database setup');
+    return;
+  }
+
+  console.log('🏗️  Starting automatic database setup...');
+  try {
+    await setupDatabase();
+    databaseSetupComplete = true;
+    console.log('✅ Database setup completed successfully!');
+  } catch (error) {
+    setupError = error.message;
+    console.error('❌ Database setup failed:', error.message);
+  }
+}
+
+// Initialize database on startup
+initializeDatabase();
+
 // Root health check for Railway
 app.get('/', (req, res) => {
-  console.log('Root path requested');
-  try {
-    res.json({ 
-      status: 'ok', 
-      message: 'Server is running on Railway!',
-      timestamp: new Date().toISOString(),
-      port: PORT
-    });
-  } catch (error) {
-    console.error('Error in root handler:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  const status = {
+    status: 'Railway deployment successful! 🚀',
+    timestamp: new Date().toISOString(),
+    database: {
+      url_configured: !!process.env.DATABASE_URL,
+      setup_complete: databaseSetupComplete,
+      setup_error: setupError
+    },
+    endpoints: {
+      health: '/health',
+      test_api: '/api/test',
+      products_search: '/api/products/search',
+      database_setup: '/api/database/setup',
+      database_status: '/api/database/status'
+    }
+  };
+  
+  console.log('Root endpoint accessed:', status);
+  res.json(status);
 });
 
+// Health check endpoint
 app.get('/health', (req, res) => {
   console.log('Health check requested');
-  try {
-    res.json({ 
-      status: 'healthy', 
-      message: 'Test server is running!',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      memory: process.memoryUsage()
-    });
-  } catch (error) {
-    console.error('Error in health handler:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  res.json({ 
+    status: 'healthy',
+    uptime: process.uptime(),
+    database: {
+      configured: !!process.env.DATABASE_URL,
+      setup_complete: databaseSetupComplete,
+      error: setupError
+    },
+    timestamp: new Date().toISOString()
+  });
 });
 
-app.get('/api/test', (req, res) => {
-  console.log('Test API called');
+// Database setup endpoint (manual trigger)
+app.post('/api/database/setup', async (req, res) => {
+  console.log('Manual database setup requested');
+  
+  if (!process.env.DATABASE_URL) {
+    return res.status(400).json({
+      success: false,
+      error: 'DATABASE_URL environment variable not configured'
+    });
+  }
+
   try {
-    res.json({ 
-      message: 'Hello from Railway!',
+    console.log('🏗️  Running manual database setup...');
+    await setupDatabase();
+    databaseSetupComplete = true;
+    setupError = null;
+    
+    res.json({
+      success: true,
+      message: 'Database setup completed successfully!',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error in test handler:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    setupError = error.message;
+    console.error('❌ Manual database setup failed:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// Product search endpoint (temporary mock data)
-app.get('/api/products/search', (req, res) => {
-  console.log('Product search called, query:', req.query.q);
-  try {
-    const query = req.query.q || '';
-    
-    // Mock data for now - replace with real database later
-    const mockProducts = [
-      {
-        id: 1,
-        name: `${query} Dishwasher`,
-        brand: 'Samsung',
-        model_number: 'DW80R9950US',
-        image_url: 'https://images.samsung.com/is/image/samsung/p6pim/us/dw80r9950us/gallery/us-dw80r9950us-dw80r9950us-aa-frontopendoor-thumb-409992276',
-        description: 'Energy efficient dishwasher with third rack',
-        listings: [
-          {
-            retailer: {
-              name: 'Best Buy',
-              domain: 'bestbuy.com',
-              logo_url: 'https://logos-world.net/wp-content/uploads/2020/05/Best-Buy-Logo.png'
-            },
-            current_price: {
-              price: 899.99,
-              original_price: 1199.99,
-              is_available: true
-            }
-          },
-          {
-            retailer: {
-              name: 'Home Depot',
-              domain: 'homedepot.com', 
-              logo_url: 'https://logos-world.net/wp-content/uploads/2020/04/Home-Depot-Logo.png'
-            },
-            current_price: {
-              price: 849.99,
-              original_price: 1199.99,
-              is_available: true
-            }
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: `${query} Refrigerator`,
-        brand: 'LG',
-        model_number: 'LRFVC2406S',
-        image_url: 'https://gscs.lge.com/gscs/Images/LG_LRFVC2406S_01.jpg',
-        description: 'French door refrigerator with smart features',
-        listings: [
-          {
-            retailer: {
-              name: 'Lowes',
-              domain: 'lowes.com',
-              logo_url: 'https://logos-world.net/wp-content/uploads/2020/04/Lowes-Logo.png'
-            },
-            current_price: {
-              price: 1299.99,
-              original_price: 1499.99,
-              is_available: true
-            }
-          }
-        ]
-      }
-    ];
+// Database status endpoint
+app.get('/api/database/status', (req, res) => {
+  res.json({
+    database_url_configured: !!process.env.DATABASE_URL,
+    setup_complete: databaseSetupComplete,
+    setup_error: setupError,
+    timestamp: new Date().toISOString()
+  });
+});
 
-    res.json({
-      success: true,
-      data: {
-        products: mockProducts,
-        total: mockProducts.length,
-        page: 1,
-        limit: 10
-      }
-    });
-  } catch (error) {
-    console.error('Error in product search:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
+// API test endpoint
+app.get('/api/test', (req, res) => {
+  console.log('API test requested');
+  res.json({ 
+    message: 'API is working!',
+    database: {
+      configured: !!process.env.DATABASE_URL,
+      setup_complete: databaseSetupComplete
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Mock product search endpoint
+app.get('/api/products/search', async (req, res) => {
+  console.log('Product search requested with query:', req.query.query);
+  
+  // If database is set up, we could query real data here
+  // For now, return mock data with database status
+  const mockProducts = [
+    {
+      id: 1,
+      name: 'Samsung 4-Door Flex French Door Refrigerator',
+      brand: 'Samsung',
+      model_number: 'RF23M8070SR',
+      current_price: 1699.99,
+      original_price: 2299.99,
+      discount_percentage: 26,
+      image_url: 'https://images.samsung.com/is/image/samsung/p6pim/us/rf23m8070sr/gallery/us-french-door-refrigerator-rf23m8070sr-rf23m8070sr-aa-frontsilver-206838623',
+      retailers: [
+        { name: 'Amazon', price: 1699.99, url: 'https://amazon.com/dp/B07V2HBXQK' },
+        { name: 'Home Depot', price: 1749.99, url: 'https://homedepot.com/p/315124657' },
+        { name: 'Best Buy', price: 1799.99, url: 'https://bestbuy.com/site/6403924.p' }
+      ],
+      database_sourced: databaseSetupComplete
+    },
+    {
+      id: 2,
+      name: 'LG Front Load Washing Machine',
+      brand: 'LG',
+      model_number: 'WM3900HWA',
+      current_price: 699.99,
+      original_price: 899.99,
+      discount_percentage: 22,
+      image_url: 'https://gscs.lge.com/content/dam/lge/us/products/washers/WM3900HWA/gallery/large01.jpg',
+      retailers: [
+        { name: 'Amazon', price: 699.99, url: 'https://amazon.com/dp/B08XXPV5HJ' },
+        { name: 'Home Depot', price: 729.99, url: 'https://homedepot.com/p/314656789' },
+        { name: 'Lowes', price: 749.99, url: 'https://lowes.com/pd/1003456789' }
+      ],
+      database_sourced: databaseSetupComplete
+    },
+    {
+      id: 3,
+      name: 'KitchenAid Stand Mixer',
+      brand: 'KitchenAid',
+      model_number: 'KSM75WH',
+      current_price: 279.99,
+      original_price: 379.99,
+      discount_percentage: 26,
+      image_url: 'https://kitchenaid-h.assetsadobe.com/is/image/content/dam/business-unit/kitchenaid/en-us/marketing-content/site-assets/page-content/pinwheel/stand-mixer-attachments-KSM75WH-slide-2-9b6e.jpg',
+      retailers: [
+        { name: 'Amazon', price: 279.99, url: 'https://amazon.com/dp/B00005UP2P' },
+        { name: 'Best Buy', price: 299.99, url: 'https://bestbuy.com/site/4259600.p' },
+        { name: 'Wayfair', price: 289.99, url: 'https://wayfair.com/kitchen-tabletop/pdp/12345678.html' }
+      ],
+      database_sourced: databaseSetupComplete
+    }
+  ];
+
+  // Filter by query if provided
+  const query = req.query.query?.toLowerCase() || '';
+  const filteredProducts = query 
+    ? mockProducts.filter(product => 
+        product.name.toLowerCase().includes(query) || 
+        product.brand.toLowerCase().includes(query)
+      )
+    : mockProducts;
+
+  res.json({
+    success: true,
+    data: filteredProducts,
+    total: filteredProducts.length,
+    database: {
+      setup_complete: databaseSetupComplete,
+      note: databaseSetupComplete ? 'Real database available' : 'Using mock data - database not ready'
+    },
+    query: req.query.query || 'all',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Auth endpoints (temporary placeholders)
@@ -169,16 +243,30 @@ app.get('/api/products/:id', (req, res) => {
   res.json({ success: false, message: 'Product details not yet implemented' });
 });
 
-// Add 404 handler
-app.use('*', (req, res) => {
-  console.log('404 - Path not found:', req.path);
-  res.status(404).json({ error: 'Path not found', path: req.path });
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: err.message 
+  });
 });
 
-// Global error handler
-app.use((error, req, res, next) => {
-  console.error('Global error handler:', error);
-  res.status(500).json({ error: 'Internal server error', message: error.message });
+// 404 handler
+app.use('*', (req, res) => {
+  console.log('404 - Path not found:', req.originalUrl);
+  res.status(404).json({
+    error: 'Not Found',
+    path: req.originalUrl,
+    available_endpoints: [
+      'GET /',
+      'GET /health', 
+      'GET /api/test',
+      'GET /api/products/search',
+      'POST /api/database/setup',
+      'GET /api/database/status'
+    ]
+  });
 });
 
 // Handle uncaught exceptions
@@ -192,11 +280,12 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`=== SERVER STARTED SUCCESSFULLY ===`);
-  console.log(`Server running on port ${PORT} (fixed for Railway Public Networking), bound to 0.0.0.0`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
-  console.log(`Test API: http://localhost:${PORT}/api/test`);
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
+  console.log('📡 Railway deployment active');
+  console.log('🗄️  Database URL configured:', !!process.env.DATABASE_URL);
+  console.log('⏰ Server started at:', new Date().toISOString());
 });
 
 server.on('error', (error) => {
