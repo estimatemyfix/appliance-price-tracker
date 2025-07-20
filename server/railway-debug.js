@@ -1,6 +1,7 @@
 // Railway Debug Script
 console.log('=== RAILWAY DEBUGGING INFO ===');
-console.log('PORT from Railway:', process.env.PORT);
+console.log('PORT from Railway env:', process.env.PORT);
+console.log('PORT we are using:', 5000);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('RAILWAY_ENVIRONMENT:', process.env.RAILWAY_ENVIRONMENT);
 console.log('RAILWAY_SERVICE_NAME:', process.env.RAILWAY_SERVICE_NAME);
@@ -27,7 +28,8 @@ console.log('Server should be accessible at: https://[railway-domain]:' + (proce
 
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 5000;
+// Force port 5000 to match Railway's Public Networking configuration
+const PORT = 5000;
 
 app.get('/', (req, res) => {
   res.json({
@@ -42,6 +44,6 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log('\n=== DEBUG SERVER STARTED ===');
-  console.log(`Listening on port ${PORT} (assigned by Railway)`);
+  console.log(`Listening on port ${PORT} (forced to match Railway's Public Networking config)`);
   console.log('Server bound to 0.0.0.0 for external access');
 }); 
