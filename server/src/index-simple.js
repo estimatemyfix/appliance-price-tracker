@@ -20,15 +20,15 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ success: true, message: 'Server is running!' });
-});
-
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')}`);
   next();
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ success: true, message: 'Server is running!' });
 });
 
 // Basic API routes that your frontend expects
