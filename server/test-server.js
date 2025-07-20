@@ -14,6 +14,6 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Hello from Railway!' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`Test server running on port ${PORT}`);
 }); 
