@@ -5,6 +5,7 @@ const app = express();
 const PORT = 5000;
 
 console.log('=== SERVER STARTING ===');
+console.log('🚀 Fresh Railway deployment triggered!');
 console.log('Port (Railway env):', process.env.PORT);
 console.log('Port (using):', PORT);
 console.log('Node version:', process.version);
