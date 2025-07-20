@@ -23,7 +23,7 @@
     "jsonwebtoken": "^9.0.2",
     "joi": "^17.11.0",
     "axios": "^1.6.2",
-    "puppeteer": "^21.6.1",
+    "puppeteer": "^22.15.0",
     "node-cron": "^3.0.3",
     "@sendgrid/mail": "^8.1.0",
     "openai": "^4.20.1",
