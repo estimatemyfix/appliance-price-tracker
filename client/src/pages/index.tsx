@@ -11,6 +11,7 @@ export default function Home() {
     <>
       <Head>
         <title>Appliance Price Tracker - Track Prices & Save Big</title>
+        {/* Force Vercel redeploy - Railway backend working! */}
         <meta 
           name="description" 
           content="Track appliance prices across major retailers like Amazon, Home Depot, Lowe's & Best Buy. Get price alerts and AI recommendations to find the best deals on appliances." 
