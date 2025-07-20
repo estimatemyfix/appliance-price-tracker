@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon test-server.js",
     "build": "echo 'No build needed for JS'",
-    "start": "node railway-debug.js",
+    "start": "node test-server.js",
     "test": "jest",
     "db:migrate": "node dist/scripts/migrate.js",
     "db:seed": "node dist/scripts/seed.js",

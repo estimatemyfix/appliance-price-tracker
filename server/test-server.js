@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const PORT = process.env.PORT || 5000;
+// Force port 5000 to match Railway's Public Networking configuration
+const PORT = 5000;
 
 console.log('=== SERVER STARTING ===');
-console.log('Port:', PORT);
+console.log('Port (Railway env):', process.env.PORT);
+console.log('Port (using):', PORT);
 console.log('Node version:', process.version);
 console.log('Environment:', process.env.NODE_ENV);
 
@@ -90,7 +92,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`=== SERVER STARTED SUCCESSFULLY ===`);
-  console.log(`Server running on port ${PORT}, bound to 0.0.0.0`);
+  console.log(`Server running on port ${PORT} (fixed for Railway Public Networking), bound to 0.0.0.0`);
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`Test API: http://localhost:${PORT}/api/test`);
 });
