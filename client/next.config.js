@@ -44,7 +44,7 @@ const nextConfig = {
     ];
   },
   experimental: {
-    appDir: false, // Using Pages Router
+    // Using Pages Router
   },
 };
 
