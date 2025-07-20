@@ -423,11 +423,11 @@ export const getPriceHistory = async (req: Request, res: Response): Promise<void
         AND ph.scraped_at >= NOW() - INTERVAL '${days} days'
     `;
     
-    const queryParams = [productId];
+    const queryParams: (number | string)[] = [productId];
     
     if (retailer) {
       priceHistorySQL += ` AND r.domain = $2`;
-      queryParams.push(retailer);
+      queryParams.push(retailer as string);
     }
     
     priceHistorySQL += ` ORDER BY ph.scraped_at ASC`;

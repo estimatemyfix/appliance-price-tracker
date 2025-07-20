@@ -32,10 +32,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const user = insertResult.rows[0];
 
     // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET || 'default-secret-key-for-development';
+    const jwtExpiry = process.env.JWT_EXPIRES_IN || '7d';
     const token = jwt.sign(
       { userId: user.id, email: user.email, is_premium: false },
-      process.env.JWT_SECRET || 'default-secret-key-for-development',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      jwtSecret,
+      { expiresIn: jwtExpiry }
     );
 
     res.status(201).json({
@@ -86,10 +88,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET || 'default-secret-key-for-development';
+    const jwtExpiry = process.env.JWT_EXPIRES_IN || '7d';
     const token = jwt.sign(
       { userId: user.id, email: user.email, is_premium: user.is_premium },
-      process.env.JWT_SECRET || 'default-secret-key-for-development',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      jwtSecret,
+      { expiresIn: jwtExpiry }
     );
 
     res.json({
