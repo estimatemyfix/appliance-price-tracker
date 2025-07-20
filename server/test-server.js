@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-// Force port 5000 to match Railway's Public Networking configuration
-const PORT = 5000;
+// Use Railway's assigned port or fallback to 5000
+const PORT = process.env.PORT || 5000;
 
 console.log('=== SERVER STARTING ===');
 console.log('🚀 Fresh Railway deployment triggered!');
@@ -286,7 +286,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
   console.log('📡 Railway deployment active');
   console.log('🗄️  Database URL configured:', !!process.env.DATABASE_URL);
