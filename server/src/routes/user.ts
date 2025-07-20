@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { asyncHandler } from '@/middleware/errorHandler';
-import { authenticateToken } from '@/middleware/auth';
-import * as userController from '@/controllers/userController';
+import { asyncHandler } from '../middleware/errorHandler';
+import { authenticateToken } from '../middleware/auth';
+import * as userController from '../controllers/userController';
 
 const router = Router();
 

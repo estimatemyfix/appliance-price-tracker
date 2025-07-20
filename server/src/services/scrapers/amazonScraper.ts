@@ -201,7 +201,7 @@ export class AmazonScraper {
       return {
         success: true,
         price,
-        original_price: originalPrice,
+        original_price: originalPrice || price,
         is_available: true,
         product_listing_id: productListingId
       };

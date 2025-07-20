@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { asyncHandler } from '@/middleware/errorHandler';
-import * as blogController from '@/controllers/blogController';
+import { asyncHandler } from '../middleware/errorHandler';
+import * as blogController from '../controllers/blogController';
 
 const router = Router();
 
