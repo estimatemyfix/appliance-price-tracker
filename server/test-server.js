@@ -154,7 +154,8 @@ app.get('/api/test', (req, res) => {
 
 // Mock product search endpoint
 app.get('/api/products/search', async (req, res) => {
-  console.log('Product search requested with query:', req.query.query);
+  const searchQuery = req.query.q || req.query.query; // Support both ?q= and ?query=
+  console.log('Product search requested with query:', searchQuery);
   
   // If database is set up, we could query real data here
   // For now, return mock data with database status
@@ -210,7 +211,7 @@ app.get('/api/products/search', async (req, res) => {
   ];
 
   // Filter by query if provided
-  const query = req.query.query?.toLowerCase() || '';
+  const query = searchQuery?.toLowerCase() || '';
   const filteredProducts = query 
     ? mockProducts.filter(product => 
         product.name.toLowerCase().includes(query) || 
@@ -218,15 +219,37 @@ app.get('/api/products/search', async (req, res) => {
       )
     : mockProducts;
 
+  // Convert to format expected by frontend
+  const frontendProducts = filteredProducts.map(product => ({
+    id: product.id,
+    name: product.name,
+    brand: product.brand,
+    model_number: product.model_number,
+    image_url: product.image_url,
+    description: `${product.brand} ${product.name}`,
+    listings: product.retailers.map(retailer => ({
+      retailer: {
+        name: retailer.name,
+        domain: retailer.url.split('/')[2], // Extract domain from URL
+        logo_url: `https://logo.clearbit.com/${retailer.url.split('/')[2]}`
+      },
+      current_price: {
+        price: retailer.price,
+        original_price: product.original_price,
+        is_available: true
+      }
+    }))
+  }));
+
   res.json({
     success: true,
-    data: filteredProducts,
-    total: filteredProducts.length,
-    database: {
-      setup_complete: databaseSetupComplete,
-      note: databaseSetupComplete ? 'Real database available' : 'Using mock data - database not ready'
+    data: {
+      products: frontendProducts,
+      total: frontendProducts.length,
+      page: 1,
+      limit: 20
     },
-    query: req.query.query || 'all',
+    query: searchQuery || 'all',
     timestamp: new Date().toISOString()
   });
 });
